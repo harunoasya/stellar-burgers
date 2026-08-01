@@ -37,6 +37,27 @@ const burgerConstructorSlice = createSlice({
       );
     },
 
+    moveIngredient: (
+      state,
+      action: PayloadAction<{ index: number; direction: 'up' | 'down' }>
+    ) => {
+      const { index, direction } = action.payload;
+
+      if (direction === 'up' && index > 0) {
+        [state.ingredients[index], state.ingredients[index - 1]] = [
+          state.ingredients[index - 1],
+          state.ingredients[index]
+        ];
+      }
+
+      if (direction === 'down' && index < state.ingredients.length - 1) {
+        [state.ingredients[index], state.ingredients[index + 1]] = [
+          state.ingredients[index + 1],
+          state.ingredients[index]
+        ];
+      }
+    },
+
     clearConstructor: (state) => {
       state.bun = null;
       state.ingredients = [];
@@ -44,7 +65,12 @@ const burgerConstructorSlice = createSlice({
   }
 });
 
-export const { setBun, addIngredient, removeIngredient, clearConstructor } =
-  burgerConstructorSlice.actions;
+export const {
+  setBun,
+  addIngredient,
+  removeIngredient,
+  moveIngredient,
+  clearConstructor
+} = burgerConstructorSlice.actions;
 
 export default burgerConstructorSlice.reducer;

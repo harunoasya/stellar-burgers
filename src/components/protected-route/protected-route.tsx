@@ -10,9 +10,13 @@ import { Preloader } from '../ui/preloader';
 
 type ProtectedRouteProps = {
   children: ReactNode;
+  onlyUnAuth?: boolean;
 };
 
-export const ProtectedRoute: FC<ProtectedRouteProps> = ({ children }) => {
+export const ProtectedRoute: FC<ProtectedRouteProps> = ({
+  children,
+  onlyUnAuth = false
+}) => {
   const user = useSelector(getUser);
   const isAuthChecked = useSelector(getIsAuthChecked);
 
@@ -22,7 +26,13 @@ export const ProtectedRoute: FC<ProtectedRouteProps> = ({ children }) => {
     return <Preloader />;
   }
 
-  if (!user) {
+  if (onlyUnAuth && user) {
+    const from = location.state?.from?.pathname || '/';
+
+    return <Navigate to={from} replace />;
+  }
+
+  if (!onlyUnAuth && !user) {
     return <Navigate to='/login' state={{ from: location }} replace />;
   }
 

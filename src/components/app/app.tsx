@@ -12,7 +12,7 @@ import {
 
 import '../../index.css';
 import styles from './app.module.css';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 
 import { AppHeader, Modal, OrderInfo, IngredientDetails } from '@components';
@@ -23,6 +23,10 @@ import { ProtectedRoute } from '../protected-route';
 
 const App = () => {
   const dispatch = useDispatch();
+  const location = useLocation();
+
+  const locationState = location.state as { background?: Location };
+  const background = locationState?.background;
 
   useEffect(() => {
     dispatch(fetchIngredients());
@@ -32,32 +36,46 @@ const App = () => {
   return (
     <div className={styles.app}>
       <AppHeader />
-      <Routes>
+      <Routes location={background || location}>
         <Route path='/' element={<ConstructorPage />} />
         <Route path='/feed' element={<Feed />} />
+        <Route path='/feed/:number' element={<OrderInfo />} />
+        <Route path='/ingredients/:id' element={<IngredientDetails />} />
         <Route
-          path='/feed/:number'
+          path='/login'
           element={
-            <Modal title='Детали заказа' onClose={() => window.history.back()}>
-              <OrderInfo />
-            </Modal>
+            <ProtectedRoute onlyUnAuth>
+              <Login />
+            </ProtectedRoute>
           }
         />
+
         <Route
-          path='/ingredients/:id'
+          path='/register'
           element={
-            <Modal
-              title='Детали ингредиента'
-              onClose={() => window.history.back()}
-            >
-              <IngredientDetails />
-            </Modal>
+            <ProtectedRoute onlyUnAuth>
+              <Register />
+            </ProtectedRoute>
           }
         />
-        <Route path='/login' element={<Login />} />
-        <Route path='/register' element={<Register />} />
-        <Route path='/forgot-password' element={<ForgotPassword />} />
-        <Route path='/reset-password' element={<ResetPassword />} />
+
+        <Route
+          path='/forgot-password'
+          element={
+            <ProtectedRoute onlyUnAuth>
+              <ForgotPassword />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path='/reset-password'
+          element={
+            <ProtectedRoute onlyUnAuth>
+              <ResetPassword />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path='/profile'
           element={
@@ -70,12 +88,7 @@ const App = () => {
           path='/profile/orders/:number'
           element={
             <ProtectedRoute>
-              <Modal
-                title='Детали заказа'
-                onClose={() => window.history.back()}
-              >
-                <OrderInfo />
-              </Modal>
+              <OrderInfo />
             </ProtectedRoute>
           }
         />
@@ -89,6 +102,47 @@ const App = () => {
         />
         <Route path='*' element={<NotFound404 />} />
       </Routes>
+      {background && (
+        <Routes>
+          <Route
+            path='/ingredients/:id'
+            element={
+              <Modal
+                title='Детали ингредиента'
+                onClose={() => window.history.back()}
+              >
+                <IngredientDetails />
+              </Modal>
+            }
+          />
+
+          <Route
+            path='/feed/:number'
+            element={
+              <Modal
+                title='Детали заказа'
+                onClose={() => window.history.back()}
+              >
+                <OrderInfo />
+              </Modal>
+            }
+          />
+
+          <Route
+            path='/profile/orders/:number'
+            element={
+              <ProtectedRoute>
+                <Modal
+                  title='Детали заказа'
+                  onClose={() => window.history.back()}
+                >
+                  <OrderInfo />
+                </Modal>
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      )}
     </div>
   );
 };

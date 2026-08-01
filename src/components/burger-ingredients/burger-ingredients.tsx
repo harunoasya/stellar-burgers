@@ -2,18 +2,11 @@ import { useState, useRef, useEffect, FC } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { useSelector } from '../../services/store';
 import { getIngredients } from '../../services/selectors/ingredientsSelectors';
-import {
-  getConstructorBun,
-  getConstructorIngredients
-} from '../../services/selectors/burgerConstructorSelectors';
 
 import { TTabMode } from '@utils-types';
 import { BurgerIngredientsUI } from '../ui/burger-ingredients';
 
 export const BurgerIngredients: FC = () => {
-  const constructorBun = useSelector(getConstructorBun);
-  const constructorIngredients = useSelector(getConstructorIngredients);
-
   const ingredients = useSelector(getIngredients);
 
   const buns = ingredients.filter((ingredient) => ingredient.type === 'bun');
