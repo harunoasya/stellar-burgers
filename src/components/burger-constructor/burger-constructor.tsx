@@ -9,6 +9,8 @@ import {
 
 import { useSelector, useDispatch } from '../../services/store';
 import { createOrder, clearOrder } from '../../services/slices/orderSlice';
+import { useNavigate } from 'react-router-dom';
+import { getUser } from '../../services/selectors/authSelectors';
 
 import {
   getOrderLoading,
@@ -18,6 +20,8 @@ import { clearConstructor } from '../../services/slices/burgerConstructorSlice';
 
 export const BurgerConstructor: FC = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const user = useSelector(getUser);
 
   const bun = useSelector(getConstructorBun);
 
@@ -35,6 +39,11 @@ export const BurgerConstructor: FC = () => {
   const orderModalData = orderNumber ? { number: orderNumber } : null;
 
   const onOrderClick = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
     if (!constructorItems.bun || orderRequest) return;
 
     const ingredients = [
