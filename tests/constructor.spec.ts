@@ -3,49 +3,41 @@ import path from 'path';
 
 test.describe('Конструктор бургера', () => {
   test.beforeEach(async ({ page }) => {
-    const harPath = path.resolve(
-      process.cwd(),
-      'tests/mocks/ingredients.har'
-    );
-
-    await page.routeFromHAR(harPath, {
-      url: '**/ingredients',
-      update: false
-    });
-
-    await page.route('**/auth/user', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          user: {
-            email: 'test@test.ru',
-            name: 'Тестовый пользователь'
-          }
-        })
-      });
-    });
-
-    await page.route('**/orders', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          name: 'Тестовый бургер',
-          order: {
-            number: 12345
-          }
-        })
-      });
-    });
-
     await page.addInitScript(() => {
       localStorage.setItem('refreshToken', 'test-refresh-token');
 
       document.cookie =
         'accessToken=test-access-token; path=/';
+    });
+
+    const ingredientsHar = path.resolve(
+      process.cwd(),
+      'tests/mocks/ingredients.har'
+    );
+
+    const userHar = path.resolve(
+      process.cwd(),
+      'tests/mocks/user.har'
+    );
+
+    const orderHar = path.resolve(
+      process.cwd(),
+      'tests/mocks/order.har'
+    );
+
+    await page.routeFromHAR(ingredientsHar, {
+      url: '**/ingredients',
+      update: false
+    });
+
+    await page.routeFromHAR(userHar, {
+      url: '**/auth/user',
+      update: false
+    });
+
+    await page.routeFromHAR(orderHar, {
+      url: '**/orders',
+      update: false
     });
 
     await page.goto('/');
@@ -64,17 +56,30 @@ test.describe('Конструктор бургера', () => {
 
     await ingredientCard.getByText('Добавить').click();
 
+    const constructor = page.getByTestId('burger-constructor');
+
     await expect(
-      page.getByText('Тестовая начинка', { exact: true }).last()
+      constructor.getByText('Тестовая начинка', { exact: true })
     ).toBeVisible();
   });
 
-  test('открывается модальное окно ингредиента', async ({ page }) => {
-    await page.getByText('Тестовая начинка', { exact: true }).click();
+  test('открывается модальное окно ингредиента с данными ингредиента', async ({
+    page
+  }) => {
+    await page.getByText('Тестовая начинка', { exact: true }).first().click();
 
     await expect(
       page.getByText('Детали ингредиента')
     ).toBeVisible();
+
+    await expect(
+      page.getByRole('heading', { name: 'Тестовая начинка' })
+    ).toBeVisible();
+
+    await expect(page.getByText('250', { exact: true })).toBeVisible();
+    await expect(page.getByText('20', { exact: true })).toBeVisible();
+    await expect(page.getByText('15', { exact: true })).toBeVisible();
+    await expect(page.getByText('5', { exact: true })).toBeVisible();
   });
 
   test('закрывается модальное окно ингредиента по крестику', async ({
@@ -124,15 +129,42 @@ test.describe('Конструктор бургера', () => {
 
     await ingredientCard.getByText('Добавить').click();
 
-    await page.getByRole('button', { name: 'Оформить заказ' }).click();
+    const burgerConstructor = page.getByTestId('burger-constructor');
 
-    await expect(page.getByText('12345')).toBeVisible();
+    await expect(
+      burgerConstructor.getByText('Тестовая начинка', { exact: true })
+    ).toBeVisible();
+
+    const orderButton = page.getByRole('button', {
+      name: 'Оформить заказ'
+    });
+
+    await expect(orderButton).toBeEnabled();
+
+    await orderButton.click();
+
+    await page.waitForTimeout(1000);
+
+    const orderDetails = page.getByTestId('order-details');
+
+    await expect(orderDetails).toBeVisible();
+
+    await expect(
+      orderDetails.getByText('12345', { exact: true })
+    ).toBeVisible();
 
     await page.getByRole('button').last().click();
 
-    await expect(page.getByText('12345')).not.toBeVisible();
+    await expect(
+      orderDetails.getByText('12345', { exact: true })
+    ).not.toBeVisible();
 
-    await expect(page.getByText('Выберите начинку')).toBeVisible();
-    await expect(page.getByText('Выберите булки').first()).toBeVisible();
+    await expect(
+      burgerConstructor.getByText('Выберите начинку')
+    ).toBeVisible();
+
+    await expect(
+      burgerConstructor.getByText('Выберите булки').first()
+    ).toBeVisible();
   });
 });
